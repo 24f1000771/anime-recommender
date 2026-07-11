@@ -20,15 +20,17 @@ def load_data():
         df["Average_Score"] = df["Average_Score"].fillna(df["Average_Score"].mean())
         df["Title_Romaji_Lower"] = df["Title_Romaji"].str.lower().str.strip()
         df = df.reset_index(drop=True)
+        df = df[df["Popularity"] > 100]
+        df = df.reset_index(drop=True)
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
         st.stop()
 
 @st.cache_resource
-def build_tfidf(df):
-    tfidf = TfidfVectorizer(token_pattern=r"[^,]+")
-    tfidf_matrix = tfidf.fit_transform(df["Genres"].fillna(""))
+def build_tfidf(_df):
+    tfidf = TfidfVectorizer(token_pattern=r"[^,]+", dtype=np.float32)
+    tfidf_matrix = tfidf.fit_transform(_df["Genres"].fillna(""))
     return tfidf_matrix
 
 def get_similarity(tfidf_matrix, idx):
