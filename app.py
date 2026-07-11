@@ -7,7 +7,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 st.set_page_config(page_title="Anime Recommender", page_icon="🎌", layout="wide")
 
 @st.cache_data
-@st.cache_data
 def load_data():
     try:
         import os
