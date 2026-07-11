@@ -33,9 +33,11 @@ def build_tfidf(_df):
     tfidf_matrix = tfidf.fit_transform(_df["Genres"].fillna(""))
     return tfidf_matrix
 
+import gc
+
 def get_similarity(tfidf_matrix, idx):
+    gc.collect()  # force clear memory before computing
     row = tfidf_matrix[idx]
-    # compute in chunks to avoid memory spike
     chunk_size = 1000
     n = tfidf_matrix.shape[0]
     scores = np.zeros(n, dtype=np.float32)
@@ -43,6 +45,8 @@ def get_similarity(tfidf_matrix, idx):
         end = min(start + chunk_size, n)
         chunk = tfidf_matrix[start:end]
         scores[start:end] = cosine_similarity(row, chunk).flatten()
+    del chunk
+    gc.collect()  # clear after too
     return scores
 
 df = load_data()
