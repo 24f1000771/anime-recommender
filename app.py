@@ -1,24 +1,15 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import traceback
-try:
-    import os
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    st.write("Base dir:", base_dir)
-    st.write("Files:", os.listdir(base_dir))
-except Exception as e:
-    st.error(traceback.format_exc())
-    st.stop()
+
 st.set_page_config(page_title="Anime Recommender", page_icon="🎌", layout="wide")
 
 @st.cache_data
 def load_data():
     try:
-        import os
-        # this finds the CSV relative to where app.py lives
         base_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(base_dir, "myanilist.csv")
         df = pd.read_csv(csv_path)
@@ -31,22 +22,26 @@ def load_data():
         df = df.reset_index(drop=True)
         return df
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error loading data: {e}")
         st.stop()
 
-@st.cache_data
-def build_similarity(df):
+@st.cache_resource
+def build_tfidf(df):
     tfidf = TfidfVectorizer(token_pattern=r"[^,]+")
     tfidf_matrix = tfidf.fit_transform(df["Genres"].fillna(""))
-    return cosine_similarity(tfidf_matrix, tfidf_matrix)
+    return tfidf_matrix
+
+def get_similarity(tfidf_matrix, idx):
+    row = tfidf_matrix[idx]
+    return cosine_similarity(row, tfidf_matrix).flatten()
 
 df = load_data()
-cosine_sim = build_similarity(df)
+tfidf_matrix = build_tfidf(df)
 indices = pd.Series(df.index, index=df["Title_Romaji_Lower"]).drop_duplicates()
 
 def recommend(title, n=10):
     title_clean = title.lower().strip()
-    
+
     if title_clean in indices:
         idx = indices[title_clean]
         matched_title = df.loc[idx, "Title_Romaji"]
@@ -57,20 +52,20 @@ def recommend(title, n=10):
         matches.sort(key=lambda x: abs(len(x) - len(title_clean)))
         idx = indices[matches[0]]
         matched_title = df.loc[idx, "Title_Romaji"]
-    
-    sim_scores = list(enumerate(cosine_sim[idx]))
+
+    sim_scores = list(enumerate(get_similarity(tfidf_matrix, idx)))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
     sim_scores = sim_scores[1:n+1]
-    
+
     anime_indices = [i[0] for i in sim_scores]
     similarity_values = [round(i[1], 3) for i in sim_scores]
-    
+
     results = df[["Title_Romaji", "Genres", "Average_Score"]].iloc[anime_indices].copy()
     results["Similarity"] = similarity_values
     results["Norm_Score"] = results["Average_Score"] / 100
     results["Norm_Similarity"] = results["Similarity"] / results["Similarity"].max()
     results["Final_Score"] = (results["Norm_Similarity"] * 0.7) + (results["Norm_Score"] * 0.3)
-    
+
     return results[["Title_Romaji", "Genres", "Average_Score", "Similarity", "Final_Score"]].sort_values("Final_Score", ascending=False).reset_index(drop=True), matched_title
 
 # UI
@@ -85,12 +80,12 @@ with col2:
 
 if user_input:
     results, matched = recommend(user_input, n=n_results)
-    
+
     if results is None:
         st.error(f"Could not find '{user_input}'. Try checking the spelling.")
     else:
         if matched.lower() != user_input.lower().strip():
             st.info(f"Showing results for: **{matched}**")
-        
+
         st.success(f"Top {len(results)} recommendations")
         st.dataframe(results, use_container_width=True)
