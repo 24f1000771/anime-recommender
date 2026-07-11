@@ -7,16 +7,25 @@ from sklearn.metrics.pairwise import cosine_similarity
 st.set_page_config(page_title="Anime Recommender", page_icon="🎌", layout="wide")
 
 @st.cache_data
+@st.cache_data
 def load_data():
-    df = pd.read_csv("myanilist.csv")
-    df = df.dropna(subset=["Title_Romaji", "Genres"])
-    df = df[~df["Genres"].str.contains("Hentai", na=False)]
-    df = df.drop_duplicates(subset=["Title_Romaji"])
-    df["Average_Score"] = pd.to_numeric(df["Average_Score"], errors="coerce")
-    df["Average_Score"] = df["Average_Score"].fillna(df["Average_Score"].mean())
-    df["Title_Romaji_Lower"] = df["Title_Romaji"].str.lower().str.strip()
-    df = df.reset_index(drop=True)
-    return df
+    try:
+        import os
+        # this finds the CSV relative to where app.py lives
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, "myanilist.csv")
+        df = pd.read_csv(csv_path)
+        df = df.dropna(subset=["Title_Romaji", "Genres"])
+        df = df[~df["Genres"].str.contains("Hentai", na=False)]
+        df = df.drop_duplicates(subset=["Title_Romaji"])
+        df["Average_Score"] = pd.to_numeric(df["Average_Score"], errors="coerce")
+        df["Average_Score"] = df["Average_Score"].fillna(df["Average_Score"].mean())
+        df["Title_Romaji_Lower"] = df["Title_Romaji"].str.lower().str.strip()
+        df = df.reset_index(drop=True)
+        return df
+    except Exception as e:
+        st.error(f"Error: {e}")
+        st.stop()
 
 @st.cache_data
 def build_similarity(df):
