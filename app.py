@@ -3,7 +3,15 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
+import traceback
+try:
+    import os
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    st.write("Base dir:", base_dir)
+    st.write("Files:", os.listdir(base_dir))
+except Exception as e:
+    st.error(traceback.format_exc())
+    st.stop()
 st.set_page_config(page_title="Anime Recommender", page_icon="🎌", layout="wide")
 
 @st.cache_data
