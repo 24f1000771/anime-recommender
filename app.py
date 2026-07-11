@@ -35,7 +35,15 @@ def build_tfidf(_df):
 
 def get_similarity(tfidf_matrix, idx):
     row = tfidf_matrix[idx]
-    return cosine_similarity(row, tfidf_matrix).flatten()
+    # compute in chunks to avoid memory spike
+    chunk_size = 1000
+    n = tfidf_matrix.shape[0]
+    scores = np.zeros(n, dtype=np.float32)
+    for start in range(0, n, chunk_size):
+        end = min(start + chunk_size, n)
+        chunk = tfidf_matrix[start:end]
+        scores[start:end] = cosine_similarity(row, chunk).flatten()
+    return scores
 
 df = load_data()
 tfidf_matrix = build_tfidf(df)
