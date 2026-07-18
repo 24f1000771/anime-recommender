@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Search — AniRec</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo" onclick="window.location='/'" style="cursor:pointer">🎌 AniRec</div>
+        <ul class="nav-links">
+            <li><a href="/ongoing">Ongoing</a></li>
+            <li><a href="/browse">Browse</a></li>
+            <li><a href="/mood" style="color:#e63946">Mood Search</a></li>
+            <li><a href="/random">Random</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container" style="max-width:700px">
+        <div class="page-header">
+            <h1>🧠 Mood <span class="highlight">Search</span></h1>
+            <p>Describe what you feel like watching and we'll find it</p>
+        </div>
+
+        <div class="mood-examples">
+            <p style="font-size:13px;color:#666;margin-bottom:10px">Try something like:</p>
+            <div class="example-chips">
+                <span class="chip" onclick="setMood(this)">Something dark and psychological</span>
+                <span class="chip" onclick="setMood(this)">A feel good romance slice of life</span>
+                <span class="chip" onclick="setMood(this)">Epic fantasy adventure like Frieren</span>
+                <span class="chip" onclick="setMood(this)">Scary horror that'll keep me up at night</span>
+                <span class="chip" onclick="setMood(this)">Wholesome comedy to cheer me up</span>
+            </div>
+        </div>
+
+        <div class="mood-input-container">
+            <textarea id="mood-input" placeholder="I want something dark and psychological with great character development..."></textarea>
+            <button onclick="doMoodSearch()">Find Anime 🔍</button>
+        </div>
+
+        <div id="mood-results" class="recommendations hidden"></div>
+    </div>
+
+    <script>
+        function setMood(el) {
+            document.getElementById("mood-input").value = el.textContent;
+        }
+
+        async function doMoodSearch() {
+            const mood = document.getElementById("mood-input").value.trim();
+            if (!mood) return;
+
+            const resultsDiv = document.getElementById("mood-results");
+            resultsDiv.classList.remove("hidden");
+            resultsDiv.innerHTML = '<p class="loading">Analysing your mood...</p>';
+
+            const response = await fetch("/api/mood", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mood })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="loading">${data.error}</p>`;
+                return;
+            }
+
+            resultsDiv.innerHTML = `
+                <p class="rec-title" style="margin-bottom:8px">Results for: <span>${mood}</span></p>
+                ${data.explanation ? `<p style="font-size:13px;color:#888;margin-bottom:20px">${data.explanation}</p>` : ''}
+                <div class="rec-grid">
+                    ${data.results.map(r => `
+                        <div class="rec-card">
+                            <img src="${r.cover || ''}" onerror="this.style.display='none'" alt="${r.title}">
+                            <div class="rec-card-info">
+                                <h4>${r.title}</h4>
+                                <p>${(r.genres || []).slice(0, 2).join(', ')}</p>
+                                <span class="score-badge">⭐ ${r.average_score || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        document.getElementById("mood-input").addEventListener("keydown", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) doMoodSearch();
+        });
+    </script>
+</body>
+</html>

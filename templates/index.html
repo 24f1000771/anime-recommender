@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniRec — Anime & Manga Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">🎌 AniRec</div>
+        <ul class="nav-links">
+            <li><a href="/ongoing">Ongoing</a></li>
+            <li><a href="/browse">Browse</a></li>
+            <li><a href="/mood">Mood Search</a></li>
+            <li><a href="/random">Random</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Discover Your Next<br><span class="highlight">Obsession</span></h1>
+            <p>Find anime, manga, manhwa and manhua tailored to what you love</p>
+            <div class="search-bar">
+                <select id="media-type">
+                    <option value="ANIME">Anime</option>
+                    <option value="MANGA_JP">Manga</option>
+                    <option value="MANGA_KR">Manhwa</option>
+                    <option value="MANGA_CN">Manhua</option>
+                </select>
+                <input type="text" id="search-input" placeholder="Search a title e.g. Vinland Saga...">
+                <button onclick="doSearch()">Search</button>
+            </div>
+            <div style="margin-top:20px">
+                <a href="/browse" class="browse-btn">Start Browsing →</a>
+            </div>
+            <div id="search-results" class="search-results hidden"></div>
+            <div id="recommendations" class="recommendations hidden"></div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature-card" onclick="window.location='/ongoing'">
+            <div class="feature-icon">📡</div>
+            <h3>Ongoing</h3>
+            <p>Currently airing anime updated in real time</p>
+        </div>
+        <div class="feature-card" onclick="window.location='/browse'">
+            <div class="feature-icon">🔍</div>
+            <h3>Browse</h3>
+            <p>Filter by genre, format, and score</p>
+        </div>
+        <div class="feature-card" onclick="window.location='/mood'">
+            <div class="feature-icon">🧠</div>
+            <h3>Mood Search</h3>
+            <p>Describe what you feel like watching and let AI find it</p>
+        </div>
+        <div class="feature-card" onclick="window.location='/random'">
+            <div class="feature-icon">🎲</div>
+            <h3>Random</h3>
+            <p>Feeling adventurous? Let us surprise you</p>
+        </div>
+    </section>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

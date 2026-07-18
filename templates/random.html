@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random — AniRec</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo" onclick="window.location='/'" style="cursor:pointer">🎌 AniRec</div>
+        <ul class="nav-links">
+            <li><a href="/ongoing">Ongoing</a></li>
+            <li><a href="/browse">Browse</a></li>
+            <li><a href="/mood">Mood Search</a></li>
+            <li><a href="/random" style="color:#e63946">Random</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container" style="max-width:600px;text-align:center">
+        <div class="page-header">
+            <h1>🎲 Feeling <span class="highlight">Lucky?</span></h1>
+            <p>Let us pick something great for you</p>
+        </div>
+
+        <div id="random-card" class="random-card hidden"></div>
+
+        <button class="roll-btn" onclick="loadRandom()">🎲 Roll Anime</button>
+    </div>
+
+    <script>
+        async function loadRandom() {
+            const card = document.getElementById("random-card");
+            card.classList.remove("hidden");
+            card.innerHTML = '<p class="loading">Finding something for you...</p>';
+
+            const response = await fetch("/api/random");
+            const data = await response.json();
+
+            if (data.error) {
+                card.innerHTML = '<p class="loading">Could not fetch. Try again!</p>';
+                return;
+            }
+
+            // strip html tags from description
+            const desc = data.description
+                ? data.description.replace(/<[^>]+>/g, '').slice(0, 200) + '...'
+                : 'No description available.';
+
+            card.innerHTML = `
+                <img src="${data.cover || ''}" onerror="this.style.display='none'" alt="${data.title}" class="random-cover">
+                <h2 style="font-size:24px;font-weight:800;margin:20px 0 8px">${data.title}</h2>
+                <p style="color:#888;font-size:13px;margin-bottom:8px">${data.format || ''} · ${data.status || ''}</p>
+                <span class="score-badge" style="font-size:13px;padding:4px 14px">⭐ ${data.average_score || 'N/A'}</span>
+                <div style="margin:16px 0">
+                    ${(data.genres || []).map(g => `<span class="genre-tag">${g}</span>`).join('')}
+                </div>
+                <p style="font-size:14px;color:#aaa;line-height:1.7;margin-top:16px">${desc}</p>
+            `;
+        }
+
+        loadRandom();
+    </script>
+</body>
+</html>

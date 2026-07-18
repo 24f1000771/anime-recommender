@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ongoing Anime — AniRec</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo" onclick="window.location='/'" style="cursor:pointer">🎌 AniRec</div>
+        <ul class="nav-links">
+            <li><a href="/ongoing" style="color:#e63946">Ongoing</a></li>
+            <li><a href="/browse">Browse</a></li>
+            <li><a href="/mood">Mood Search</a></li>
+            <li><a href="/random">Random</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📡 Ongoing <span class="highlight">Anime</span></h1>
+            <p>Currently airing shows updated in real time</p>
+        </div>
+        <div id="ongoing-grid" class="card-grid">
+            <p class="loading">Fetching ongoing anime...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadOngoing() {
+            const grid = document.getElementById("ongoing-grid");
+            const response = await fetch("/api/ongoing");
+            const data = await response.json();
+
+            if (data.error) {
+                grid.innerHTML = '<p class="loading">Could not load ongoing anime. Try again later.</p>';
+                return;
+            }
+
+            grid.innerHTML = data.results.map(r => `
+                <div class="rec-card">
+                    <img src="${r.cover || ''}" onerror="this.style.display='none'" alt="${r.title}">
+                    <div class="rec-card-info">
+                        <h4>${r.title}</h4>
+                        <p>${(r.genres || []).slice(0, 2).join(', ')}</p>
+                        ${r.next_episode ? `<p style="color:#e63946;font-size:11px;margin-top:4px">Ep ${r.next_episode} airing soon</p>` : ''}
+                        <span class="score-badge">⭐ ${r.average_score || 'N/A'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        loadOngoing();
+    </script>
+</body>
+</html>

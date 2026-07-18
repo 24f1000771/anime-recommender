@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse — AniRec</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo" onclick="window.location='/'" style="cursor:pointer">🎌 AniRec</div>
+        <ul class="nav-links">
+            <li><a href="/ongoing">Ongoing</a></li>
+            <li><a href="/browse" style="color:#e63946">Browse</a></li>
+            <li><a href="/mood">Mood Search</a></li>
+            <li><a href="/random">Random</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>🔍 Browse <span class="highlight">Anime</span></h1>
+            <p>Search titles or filter by genre and format</p>
+        </div>
+
+        <div class="browse-search-bar">
+            <input type="text" id="browse-search" placeholder="Search anime title..." oninput="onBrowseSearch()">
+        </div>
+
+        <div class="genre-tags">
+            <span class="genre-tag-btn active" onclick="setGenre(this, '')">All</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Action')">Action</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Adventure')">Adventure</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Comedy')">Comedy</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Drama')">Drama</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Fantasy')">Fantasy</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Horror')">Horror</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Mecha')">Mecha</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Mystery')">Mystery</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Psychological')">Psychological</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Romance')">Romance</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Sci-Fi')">Sci-Fi</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Slice of Life')">Slice of Life</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Sports')">Sports</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Supernatural')">Supernatural</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Thriller')">Thriller</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Ecchi')">Ecchi</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Shoujo Ai')">Shoujo Ai</span>
+            <span class="genre-tag-btn" onclick="setGenre(this, 'Shounen Ai')">Shounen Ai</span>
+        </div>
+
+        <div class="format-row">
+            <select id="format-filter" onchange="loadBrowse()">
+                <option value="">All Formats</option>
+                <option value="TV">TV Series</option>
+                <option value="MOVIE">Movie</option>
+                <option value="OVA">OVA</option>
+                <option value="ONA">ONA</option>
+                <option value="SPECIAL">Special</option>
+            </select>
+        </div>
+
+        <div id="browse-grid" class="card-grid">
+            <p class="loading">Loading...</p>
+        </div>
+    </div>
+
+    <script>
+        let activeGenre = '';
+        let browseTimeout = null;
+
+        // pick up search term from URL first before anything else
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSearch = urlParams.get('search');
+        const urlMedia = urlParams.get('media');
+
+        if (urlSearch) {
+            document.getElementById("browse-search").value = urlSearch;
+        }
+
+        function setGenre(el, genre) {
+            document.querySelectorAll('.genre-tag-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            activeGenre = genre;
+            loadBrowse();
+        }
+
+        function onBrowseSearch() {
+            clearTimeout(browseTimeout);
+            browseTimeout = setTimeout(loadBrowse, 400);
+        }
+
+        async function loadBrowse() {
+            const format = document.getElementById("format-filter").value;
+            const searchTerm = document.getElementById("browse-search").value.trim();
+            const grid = document.getElementById("browse-grid");
+
+            grid.innerHTML = '<p class="loading">Loading...</p>';
+
+            let url = "/api/browse?";
+            if (activeGenre) url += `genre=${encodeURIComponent(activeGenre)}&`;
+            if (format) url += `format=${encodeURIComponent(format)}&`;
+            if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error || !data.results.length) {
+                grid.innerHTML = '<p class="loading">No results found.</p>';
+                return;
+            }
+
+            grid.innerHTML = data.results.map(r => `
+                <div class="rec-card">
+                    <img src="${r.cover || ''}" onerror="this.style.display='none'" alt="${r.title}">
+                    <div class="rec-card-info">
+                        <h4>${r.title}</h4>
+                        <p>${(r.genres || []).slice(0, 2).join(', ')}</p>
+                        <p style="font-size:11px;color:#666;margin-top:2px">${r.format || ''} · ${r.status || ''}</p>
+                        <span class="score-badge">⭐ ${r.average_score || 'N/A'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        loadBrowse();
+    </script>
+</body>
+</html>
