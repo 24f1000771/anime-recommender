@@ -46,3 +46,18 @@ pip install -r requirements.txt
 ```
 
 Create a `.env` file:
+
+Run the app:
+```bash
+python app.py
+```
+
+Open `http://localhost:5000`
+
+## Requirements
+flask
+requests
+groq
+python-dotenv
+
+
